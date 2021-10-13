@@ -1,0 +1,20 @@
+﻿# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# YAML schema reference:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+stages:
+  - template: templates/publish-nuget-package.yml
+    parameters:
+      projectPath: 'Bum.EventGrid.Subscriptions.Scanner/Bum.EventGrid.Subscriptions.Scanner.csproj'
+      solutionPath: 
+  - template: templates/publish-nuget-package.yml
+    parameters:
+      projectPath: 'Bum.EventGrid.Subscriptions.Annotations/Bum.EventGrid.Subscriptions.Annotations.csproj'
+      solutionPath: 'Bum.EventGrid.Subscriptions.sln'

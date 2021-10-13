@@ -1,0 +1,124 @@
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# YAML schema reference:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
+
+parameters:
+  - name: projectPath
+    type: string
+  - name: solutionPath
+    type: string
+
+stages:
+  - stage: Prerelease
+    displayName: 'Publish Prerelease NuGet Package'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/develop')
+    jobs:
+      - job:
+        pool:
+          vmImage: 'windows-latest'
+        variables:
+          NUGET_PLUGIN_HANDSHAKE_TIMEOUT_IN_SECONDS: 60
+          NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+          GET_CACHE_KEY: 'nuget | "$(Agent.OS)" | **/packages.lock.json,!**/bin/**,!**/obj/**'
+        steps:
+          - task: Cache@2
+            displayName: Cache NuGet packages
+            inputs:
+              key: $(NUGET_CACHE_KEY)
+              path: $(NUGET_PACKAGES)
+          - task: DotNetCoreCLI@2
+            displayName: Restore
+            inputs:
+              command: 'restore'
+              restoreArguments: '--locked-mode'
+              projects: ${{parameters.solutionPath}}
+              feedsToUse: 'select'
+              vstsFeed: 'Product/occtoo.com'
+              includeNuGetOrg: true
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              command: 'build'
+              projects: ${{parameters.solutionPath}}
+              arguments: --configuration Release --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: 'Create NuGet Package - Prerelease Version'
+            inputs:
+              command: pack
+              buildProperties: 'VersionSuffix="$(Build.BuildNumber)"'
+              packagesToPack: ${{parameters.projectPath}}
+              configurationToPack: 'Debug'
+          - task: PublishSymbols@2
+            inputs:
+              SearchPattern: '**/bin/**/*.pdb'
+              SymbolServerType: 'TeamServices'
+              TreatNotIndexedAsWarning: true
+
+          - task: NuGetCommand@2
+            displayName: 'Push NuGet Package'
+            inputs:
+              command: 'push'
+              feedsToUse: 'select'
+              packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+              nuGetFeedType: 'internal'
+              publishVstsFeed: 'Product/occtoo.com'
+              allowPackageConflicts: true
+
+  - stage: Release
+    displayName: 'Publish release versions'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    jobs:
+      - job:
+        pool:
+          vmImage: 'windows-latest'
+        variables:
+          NUGET_PLUGIN_HANDSHAKE_TIMEOUT_IN_SECONDS: 60
+          NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+          GET_CACHE_KEY: 'nuget | "$(Agent.OS)" | **/packages.lock.json,!**/bin/**,!**/obj/**'
+        steps:
+          - task: Cache@2
+            displayName: Cache NuGet packages
+            inputs:
+              key: $(NUGET_CACHE_KEY)
+              path: $(NUGET_PACKAGES)
+          - task: DotNetCoreCLI@2
+            displayName: Restore
+            inputs:
+              command: 'restore'
+              restoreArguments: '--locked-mode'
+              projects: ${{parameters.solutionPath}}
+              feedsToUse: 'select'
+              vstsFeed: 'Product/occtoo.com'
+              includeNuGetOrg: true 
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              command: 'build'
+              projects: ${{parameters.solutionPath}}
+              arguments: --configuration Release --no-restore
+          - task: DotNetCoreCLI@2
+            displayName: 'Create NuGet Package - Release Version'
+            inputs:
+              command: pack
+              packagesToPack: ${{parameters.projectPath}}
+              configurationToPack: 'Release'
+              nobuild: true
+          - task: PublishSymbols@2
+            inputs:
+              SearchPattern: '**/bin/**/*.pdb'
+              SymbolServerType: 'TeamServices'
+              TreatNotIndexedAsWarning: true
+
+          - task: NuGetCommand@2
+            displayName: 'Push Nuget Package'
+            inputs:
+              command: 'push'
+              feedsToUse: 'select'
+              packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+              nuGetFeedType: 'internal'
+              publishVstsFeed: 'Product/occtoo.com'
+              allowPackageConflicts: true
+
+
+    

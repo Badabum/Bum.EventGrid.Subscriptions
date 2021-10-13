@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <nullable>enable</nullable>
         <PackageId>Superfeed.EventGrid.Annotations</PackageId>
         <Version>0.5.0</Version>
