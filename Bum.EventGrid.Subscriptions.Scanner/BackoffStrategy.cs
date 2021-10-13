@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace superfeed.eventgrid.tool
+namespace Bum.EventGrid.Subscriptions.Scanner
 {
      /// <summary>
     /// A random number generator with a Uniform distribution that is thread-safe (via locking).

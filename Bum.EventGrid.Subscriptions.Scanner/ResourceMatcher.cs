@@ -1,6 +1,6 @@
-﻿using superfeed.eventgrid.annotations;
+﻿using Bum.EventGrid.Subscriptions.Annotations;
 
-namespace superfeed.eventgrid.tool
+namespace Bum.EventGrid.Subscriptions.Scanner
 {
     public static class ResourceMatcher
     {

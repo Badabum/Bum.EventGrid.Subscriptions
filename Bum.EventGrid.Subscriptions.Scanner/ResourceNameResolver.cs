@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace superfeed.eventgrid.tool
+namespace Bum.EventGrid.Subscriptions.Scanner
 {
     public static class ResourceNameResolver
     {

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Bum.EventGrid.Subscriptions.Annotations;
 using CommandLine;
 using CSharpFunctionalExtensions;
 using Microsoft.Azure.Management.EventGrid;
@@ -13,23 +16,18 @@ using Microsoft.Rest;
 using Newtonsoft.Json;
 using Polly;
 using Serilog;
-using superfeed.eventgrid.annotations;
 
-namespace superfeed.eventgrid.tool
+namespace Bum.EventGrid.Subscriptions.Scanner
 {
     public class Options
     {
-        [Option('p', "solutionPath", Required = true, HelpText = "Path to the folder containing solution file")]
-        public string SolutionPath { get; set; }
+        [Option('t', "targetAssembly", Required = true, HelpText = "Target assembly path")] public string TargetAssembly { get; set; }
 
         [Option('s', "subscriptionId", Required = true, HelpText = "Azure subscription identifier")]
         public string Subscription { get; set; }
 
-        [Option('e', "environment", Required = true, HelpText = "Superfeed environment where to lookup resources")]
+        [Option('e', "environment", Required = true, HelpText = "If you're using different environments in azure pass the name of environment here")]
         public string Environment { get; set; }
-
-        [Option('f', "filter", Required = false, HelpText = "Specifies filter for assembly files. For example 'abs*.dll'")]
-        public string? Filter { get; set; }
 
         [Option("dry-run", Required = false, HelpText = "Prints out all discovered subscriptions")]
         public bool DryRun { get; set; }
@@ -50,6 +48,7 @@ namespace superfeed.eventgrid.tool
                         Formatting = Formatting.Indented
                     }))));
         }
+        
         private static async Task<Result<ImmutableList<EventSubscription>>> UpdateSubscriptions(Options options)
         {
             AccessToken defaultToken = await new DefaultAzureCredential(new DefaultAzureCredentialOptions()
@@ -64,7 +63,7 @@ namespace superfeed.eventgrid.tool
             var token = new TokenCredentials(defaultToken.Token);
             var client = new EventGridManagementClient(token);
             return await AssemblyScanner
-                .ScanSubscriptions(options.SolutionPath, options.Filter)
+                .ScanSubscriptions(options.TargetAssembly)
                 .Tap(subs => Log.Logger.Information(JsonConvert.SerializeObject(subs, new JsonSerializerSettings()
                 {
                     Formatting = Formatting.Indented

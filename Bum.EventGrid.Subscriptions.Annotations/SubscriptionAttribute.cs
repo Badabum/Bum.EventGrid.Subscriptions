@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace superfeed.eventgrid.annotations
+namespace Bum.EventGrid.Subscriptions.Annotations
 {
     public class SubscriptionAttribute : Attribute
     {

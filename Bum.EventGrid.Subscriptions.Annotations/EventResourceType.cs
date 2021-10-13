@@ -1,4 +1,4 @@
-﻿namespace superfeed.eventgrid.annotations
+﻿namespace Bum.EventGrid.Subscriptions.Annotations
 {
     public enum EventResourceType
     {
